@@ -10,14 +10,14 @@ import (
 func ForDuration(n int, duration time.Duration, fn func()) {
 	bf := breakFuncFactory(n)
 	timer := time.NewTimer(duration)
-	forDurationChan(n, bf, timer.C, fn)
+	executeForNIterationsOrTimeout(n, bf, timer.C, fn)
 }
 
 // ForTimer will perform some action in a loop for a given *time.Timer, once
 // the timer expires, or once n loops have been completed this function will
 // return
 func ForTimer(n int, timer *time.Timer, fn func()) {
-	forDurationChan(n, breakFuncFactory(n), timer.C, fn)
+	executeForNIterationsOrTimeout(n, breakFuncFactory(n), timer.C, fn)
 }
 
 // breakFuncFactory will generate a function to break the loop
@@ -33,9 +33,9 @@ func breakFuncFactory(n int) func(n int) bool {
 	return bf
 }
 
-// forDurationChan handles breaking the loop based off a read
+// executeForNIterationsOrTimeout handles breaking the loop based off a read
 // only time.Time chan.
-var forDurationChan = func(
+var executeForNIterationsOrTimeout = func(
 	n int,
 	bfn func(n int) bool,
 	stopChan <-chan time.Time,

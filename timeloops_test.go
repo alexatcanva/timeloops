@@ -83,7 +83,7 @@ func TestForDuringChan(t *testing.T) {
 			tc <- time.Now()
 		}
 	}
-	forDurationChan(3, x, tc, fn)
+	executeForNIterationsOrTimeout(3, x, tc, fn)
 
 	if ticks != 2 {
 		t.Fatalf("expected: %d, got: %d", 2, ticks)
