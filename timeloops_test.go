@@ -56,6 +56,11 @@ func TestBreakFuncFactoryNoN(t *testing.T) {
 			n:      -1,
 			expect: false,
 		},
+		{
+			desc:   "-1000 n",
+			n:      -1000,
+			expect: false,
+		},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
