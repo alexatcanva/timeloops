@@ -1,6 +1,7 @@
 package timeloops
 
 import (
+	"fmt"
 	"testing"
 	"time"
 )
@@ -132,5 +133,34 @@ func TestForDuringChanWithBreakCalled(t *testing.T) {
 	}
 	if err != nil {
 		t.Fatal("did not expect an error")
+	}
+}
+
+func TestForDuringChanWithErrorCalled(t *testing.T) {
+	tc := make(chan time.Time, 1)
+	x := func(n int) bool { return false }
+
+	ticks := 0
+	fn := func() error {
+		ticks++
+		// run for two ticks
+		if ticks == 5 {
+			tc <- time.Now()
+		}
+		if ticks == 3 {
+			return fmt.Errorf("something broke here?")
+		}
+		return nil
+	}
+	err := executeForNIterationsOrTimeout(3, x, tc, fn)
+
+	if ticks != 3 {
+		t.Fatalf("expected: %d, got: %d", 3, ticks)
+	}
+	if err == nil {
+		t.Fatal("did not expect an error")
+	}
+	if err.Error() != "something broke here?" {
+		t.Fatalf("expected: %s, got: %s", "something broke here?", err.Error())
 	}
 }
