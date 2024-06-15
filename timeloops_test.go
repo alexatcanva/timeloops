@@ -1,4 +1,4 @@
-package timeloop
+package timeloops
 
 import (
 	"testing"
@@ -8,8 +8,8 @@ import (
 func TestCountDuration(t *testing.T) {
 	count := 5
 	results := 0
-	ForDuration(count, 5*time.Second, func() {
-		results += 1
+	ForDuration(count, 5*time.Second, func(Break) {
+		results++
 	})
 	if results != 5 {
 		t.Fatal("did not reach expected count")
@@ -19,7 +19,7 @@ func TestCountDuration(t *testing.T) {
 func TestCountTimer(t *testing.T) {
 	count := 5
 	results := 0
-	ForTimer(count, time.NewTimer(5*time.Second), func() {
+	ForTimer(count, time.NewTimer(5*time.Second), func(Break) {
 		results += 1
 	})
 	if results != 5 {

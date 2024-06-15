@@ -1,13 +1,19 @@
-package timeloop
+package timeloops
 
 import (
 	"time"
 )
 
+// Break is a function that will break a the timeloop.
+type Break func()
+
+// TimeLoopFunc is a function that will be executed in a timeloop.
+type TimeloopFunc func(Break)
+
 // ForDuration will perform some action in a loop for a given time.Duration, once
 // the timer expires, or once n loops have been completed this function will
 // return
-func ForDuration(n int, duration time.Duration, fn func()) {
+func ForDuration(n int, duration time.Duration, fn TimeloopFunc) {
 	bf := breakFuncFactory(n)
 	timer := time.NewTimer(duration)
 	executeForNIterationsOrTimeout(n, bf, timer.C, fn)
@@ -16,7 +22,7 @@ func ForDuration(n int, duration time.Duration, fn func()) {
 // ForTimer will perform some action in a loop for a given *time.Timer, once
 // the timer expires, or once n loops have been completed this function will
 // return
-func ForTimer(n int, timer *time.Timer, fn func()) {
+func ForTimer(n int, timer *time.Timer, fn TimeloopFunc) {
 	executeForNIterationsOrTimeout(n, breakFuncFactory(n), timer.C, fn)
 }
 
@@ -39,10 +45,14 @@ var executeForNIterationsOrTimeout = func(
 	n int,
 	bfn func(n int) bool,
 	stopChan <-chan time.Time,
-	fn func(),
+	fn TimeloopFunc,
 ) {
+	stop := false
+	brk := func() {
+		stop = true
+	}
 Loop:
-	for {
+	for !stop {
 		if bfn(n) {
 			break
 		}
@@ -50,7 +60,7 @@ Loop:
 		case <-stopChan:
 			break Loop
 		default:
-			fn()
+			fn(brk)
 			n--
 		}
 	}
