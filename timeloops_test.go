@@ -125,9 +125,12 @@ func TestForDuringChanWithBreakCalled(t *testing.T) {
 		}
 		return nil
 	}
-	executeForNIterationsOrTimeout(3, x, tc, fn)
+	err := executeForNIterationsOrTimeout(3, x, tc, fn)
 
 	if ticks != 3 {
 		t.Fatalf("expected: %d, got: %d", 3, ticks)
+	}
+	if err != nil {
+		t.Fatal("did not expect an error")
 	}
 }
