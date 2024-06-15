@@ -1,3 +1,3 @@
-module github.com/alexatcanva/timeloop
+module github.com/alexatcanva/timeloops
 
 go 1.22.0
