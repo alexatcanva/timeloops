@@ -8,10 +8,26 @@ import (
 func TestCountDuration(t *testing.T) {
 	count := 5
 	results := 0
-	ForDuration(count, 5*time.Second, func(Break) {
-		results++
+	ForDuration(count, 5*time.Second, func() error {
+		results += 1
+		return nil
 	})
 	if results != 5 {
+		t.Fatal("did not reach expected count")
+	}
+}
+
+func TestCountDurationBreakWhen3(t *testing.T) {
+	count := 5
+	results := 0
+	ForDuration(count, 5*time.Second, func() error {
+		results++
+		if results == 3 {
+			return TimeloopBreak
+		}
+		return nil
+	})
+	if results != 3 {
 		t.Fatal("did not reach expected count")
 	}
 }
@@ -19,8 +35,9 @@ func TestCountDuration(t *testing.T) {
 func TestCountTimer(t *testing.T) {
 	count := 5
 	results := 0
-	ForTimer(count, time.NewTimer(5*time.Second), func(Break) {
+	ForTimer(count, time.NewTimer(5*time.Second), func() error {
 		results += 1
+		return nil
 	})
 	if results != 5 {
 		t.Fatal("did not reach expected count")
@@ -77,15 +94,40 @@ func TestForDuringChan(t *testing.T) {
 	x := func(n int) bool { return false }
 
 	ticks := 0
-	fn := func() {
+	fn := func() error {
 		ticks++
+		// run for two ticks
 		if ticks == 2 {
 			tc <- time.Now()
 		}
+		return nil
 	}
 	executeForNIterationsOrTimeout(3, x, tc, fn)
 
 	if ticks != 2 {
 		t.Fatalf("expected: %d, got: %d", 2, ticks)
+	}
+}
+
+func TestForDuringChanWithBreakCalled(t *testing.T) {
+	tc := make(chan time.Time, 1)
+	x := func(n int) bool { return false }
+
+	ticks := 0
+	fn := func() error {
+		ticks++
+		// run for two ticks
+		if ticks == 5 {
+			tc <- time.Now()
+		}
+		if ticks == 3 {
+			return TimeloopBreak
+		}
+		return nil
+	}
+	executeForNIterationsOrTimeout(3, x, tc, fn)
+
+	if ticks != 3 {
+		t.Fatalf("expected: %d, got: %d", 3, ticks)
 	}
 }
