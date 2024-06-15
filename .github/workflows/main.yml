@@ -39,7 +39,8 @@ jobs:
 
   publish:
     permissions:
-      write
+      contents:
+        write
     needs: build
     runs-on: ubuntu-latest
     steps:
