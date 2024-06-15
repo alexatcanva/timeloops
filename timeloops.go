@@ -1,23 +1,29 @@
-package timeloop
+package timeloops
 
 import (
+	"errors"
 	"time"
 )
 
-// ForDuration will perform some action in a loop for a given time.Duration, once
-// the timer expires, or once n loops have been completed this function will
-// return
-func ForDuration(n int, duration time.Duration, fn func()) {
+// Return TimeloopBreak to break the timeloop.
+//
+//lint:ignore ST1012 Overload the error type for easy API.
+var TimeloopBreak error = errors.New("break")
+
+// ForDuration will perform some action in a loop for a given time.Duration,
+// once the timer expires, or once n loops have been completed this function
+// will return
+func ForDuration(n int, duration time.Duration, fn func() error) error {
 	bf := breakFuncFactory(n)
 	timer := time.NewTimer(duration)
-	executeForNIterationsOrTimeout(n, bf, timer.C, fn)
+	return executeForNIterationsOrTimeout(n, bf, timer.C, fn)
 }
 
 // ForTimer will perform some action in a loop for a given *time.Timer, once
 // the timer expires, or once n loops have been completed this function will
 // return
-func ForTimer(n int, timer *time.Timer, fn func()) {
-	executeForNIterationsOrTimeout(n, breakFuncFactory(n), timer.C, fn)
+func ForTimer(n int, timer *time.Timer, fn func() error) error {
+	return executeForNIterationsOrTimeout(n, breakFuncFactory(n), timer.C, fn)
 }
 
 // breakFuncFactory will generate a function to break the loop
@@ -39,8 +45,8 @@ var executeForNIterationsOrTimeout = func(
 	n int,
 	bfn func(n int) bool,
 	stopChan <-chan time.Time,
-	fn func(),
-) {
+	fn func() error,
+) error {
 Loop:
 	for {
 		if bfn(n) {
@@ -50,8 +56,14 @@ Loop:
 		case <-stopChan:
 			break Loop
 		default:
-			fn()
+			if err := fn(); err != nil {
+				if errors.Is(err, TimeloopBreak) {
+					break Loop
+				}
+				return err
+			}
 			n--
 		}
 	}
+	return nil
 }
